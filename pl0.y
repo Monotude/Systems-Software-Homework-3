@@ -112,62 +112,64 @@ extern void setProgAST(block_t t);
 }
 
 %%
- /* Write your grammar rules below and before the next %% */
+/* Write your grammar rules below and before the next %% */
 
-program:
+program:            block "." { setProgAST($1); };
 
-block: 
+block:              constDecls varDecls procDecls stmt { $$ = ast_block($1, $2, $3, $4); };
 
-constDecls:
-constDecl:
-constDefs: 
-constDefs:
+constDecls:         empty { $$ = ast_const_decls_empty($1); }
+                    | constDecls constDecl { $$ = ast_const_decls($1, $2); };              
+constDecl:          "const" constDefs ";" { $$ = ast_const_decl($2); };
+constDefs:          constDef { $$ = ast_const_defs_singleton($1); }
+                    | constDefs "," constDef { $$ = ast_const_defs($1, $3); };
+constDef:           identsym "=" numbersym { $$ = ast_const_def($1, $3); };  
 
-varDecls: empty { $$ = ast_var_decls_empty($1);}
-         | varDecls varDecl { $$ = ast_var_decls($1, $2);};
-varDecl: "var" idents ";" { $$ = ast_var_decl($2); }
+varDecls:           empty { $$ = ast_var_decls_empty($1); }
+                    | varDecls varDecl { $$ = ast_var_decls($1, $2); };
+varDecl:            "var" idents ";" { $$ = ast_var_decl($2); };
 idents:
 
-procDecls: empty { $$ = ast_proc_decls_empty($1);}
-         | procDecls procDecl { $$ = ast_proc_decls($1, $2);};
-procDecl: "procedure" identsym ";" block ";" { $$ = ast_proc_decl($2, $4);};
+procDecls:          empty { $$ = ast_proc_decls_empty($1); }
+                    | procDecls procDecl { $$ = ast_proc_decls($1, $2); };
+procDecl:           "procedure" identsym ";" block ";" { $$ = ast_proc_decl($2, $4); };
 
-stmt: assignStmt { $$ = ast_stmt_assign($1);}
-    | callStmt { $$ = ast_stmt_call($1);}
-    | beginStmt { $$ = ast_stmt_begin($1);}
-    | ifStmt { $$ = ast_stmt_if($1);}
-    | whileStmt { $$ = ast_stmt_while($1);}
-    | readStmt { $$ = ast_stmt_read($1);}
-    | writeStmt { $$ = ast_stmt_write($1);}
-    | skipStmt { $$ = ast_stmt_skip($1);};
-assignStmt: identsym ":=" expr { $$ = ast_assign_stmt($1, $3);};
-callStmt: "call" identsym { $$ = ast_call_stmt($2);};
-beginStmt: "begin" stmts "end" { $$ = ast_begin_stmt($2);};
-ifStmt: "if" cond "then" stmt "else" stmt { $$ = ast_if_stmt($2, $4, $6);};
-whileStmt: "while" condition "do" stmt { $$ = ast_while_stmt($2, $4);};
-readStmt: "read" identsym { $$ = ast_read_stmt($2);};
-writeStmt: "write" expr { $$ = ast_write_stmt($2);};
-skipStmt: "skip" { $$ = ast_skip_stmt();};         /* not 100% sure what to pass here, ast.h says the parameter is "file_location *file_loc" */
-stmts: stmt { $$ = ast_stmts_singleton($1);}
-     | stmts ";" stmt { $$ = ast_stmts($1, $3);};
+stmt:               assignStmt { $$ = ast_stmt_assign($1); }
+                    | callStmt { $$ = ast_stmt_call($1); }
+                    | beginStmt { $$ = ast_stmt_begin($1); }
+                    | ifStmt { $$ = ast_stmt_if($1); }
+                    | whileStmt { $$ = ast_stmt_while($1); }
+                    | readStmt { $$ = ast_stmt_read($1); }
+                    | writeStmt { $$ = ast_stmt_write($1); }
+                    | skipStmt { $$ = ast_stmt_skip($1); };
+assignStmt:         identsym ":=" expr { $$ = ast_assign_stmt($1, $3); };
+callStmt:           "call" identsym { $$ = ast_call_stmt($2); };
+beginStmt:          "begin" stmts "end" { $$ = ast_begin_stmt($2); };
+ifStmt:             "if" cond "then" stmt "else" stmt { $$ = ast_if_stmt($2, $4, $6); };
+whileStmt:          "while" condition "do" stmt { $$ = ast_while_stmt($2, $4); };
+readStmt:           "read" identsym { $$ = ast_read_stmt($2); };
+writeStmt:          "write" expr { $$ = ast_write_stmt($2); };
+skipStmt:           "skip" { $$ = ast_skip_stmt(); };         // not 100% sure what to pass here, ast.h says the parameter is "file_location *file_loc"
+stmts:              stmt { $$ = ast_stmts_singleton($1); }
+                    | stmts ";" stmt { $$ = ast_stmts($1, $3); };
 
-condition: odd_condition { $$ = ast_condition_odd($1);}
-         | rel_op_condition { $$ = ast_condition_rel($1);};
-oddCondition: "odd" expr { $$ = ast_odd_condition($2);};
-relOpCondition: expr rel_op expr { $$ = ast_rel_op_condition($1, $2, $3);};
-relOp: "="
-      | "<>"
-      | "<"
-      | "<="
-      | ">"
-      | ">=";
+condition:          oddCondition { $$ = ast_condition_odd($1); }
+                    | relOpCondition { $$ = ast_condition_rel($1); };
+oddCondition:       "odd" expr { $$ = ast_odd_condition($2); };
+relOpCondition:     expr rel_op expr { $$ = ast_rel_op_condition($1, $2, $3); };
+relOp:              "="
+                    | "<>"
+                    | "<"
+                    | "<="
+                    | ">"
+                    | ">=" ;
 
 expr:
 term:
 factor:
-posSign:
-empty: %empty{ file_location *floc = file_location_make(lexer_filename(), lexer_line());
-       $$ = ast_empty(floc);};
+pos_sign:
+empty:              %empty{ file_location *floc = file_location_make(lexer_filename(), lexer_line()); 
+                    $$ = ast_empty(floc); };
 
 %%
 
