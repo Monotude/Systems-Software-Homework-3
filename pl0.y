@@ -167,7 +167,7 @@ relOp:              "="
 expr:
 term:
 factor:
-pos_sign:
+posSign:
 empty:              %empty{ file_location *floc = file_location_make(lexer_filename(), lexer_line()); 
                     $$ = ast_empty(floc); };
 
