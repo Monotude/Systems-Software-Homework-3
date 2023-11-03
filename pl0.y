@@ -128,7 +128,8 @@ constDef:           identsym "=" numbersym { $$ = ast_const_def($1, $3); };
 varDecls:           empty { $$ = ast_var_decls_empty($1); }
                     | varDecls varDecl { $$ = ast_var_decls($1, $2); };
 varDecl:            "var" idents ";" { $$ = ast_var_decl($2); };
-idents:
+idents:             identsym { $$ = ast_idents_singleton($1); };
+                    | idents "," identsym { $$ = ast_idents($1, $3); };
 
 procDecls:          empty { $$ = ast_proc_decls_empty($1); }
                     | procDecls procDecl { $$ = ast_proc_decls($1, $2); };
