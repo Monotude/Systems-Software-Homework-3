@@ -150,7 +150,7 @@ ifStmt:             "if" cond "then" stmt "else" stmt { $$ = ast_if_stmt($2, $4,
 whileStmt:          "while" condition "do" stmt { $$ = ast_while_stmt($2, $4); };
 readStmt:           "read" identsym { $$ = ast_read_stmt($2); };
 writeStmt:          "write" expr { $$ = ast_write_stmt($2); };
-skipStmt:           "skip" { $$ = ast_skip_stmt(); };         // not 100% sure what to pass here, ast.h says the parameter is "file_location *file_loc"
+skipStmt:           "skip" { $$ = ast_skip_stmt(); };         /* not 100% sure what to pass here, ast.h says the parameter is "file_location *file_loc" */
 stmts:              stmt { $$ = ast_stmts_singleton($1); }
                     | stmts ";" stmt { $$ = ast_stmts($1, $3); };
 
@@ -165,10 +165,16 @@ relOp:              "="
                     | ">"
                     | ">=" ;
 
-expr:
-term:
-factor:
-posSign:
+expr:               term
+                    | expr plussym term { $$ = ast_binary_op_expr($1, $2, $3);}               
+                    | expr minussym term { $$ = ast_binary_op_expr($1, $2, $3);};             
+term:               factor
+                    | term multsym factor { $$ = ast_binary_op_expr($1, $2, $3);}
+                    | term divsym factor { $$ = ast_binary_op_expr($1, $2, $3);};           
+factor:             identsym { $$ = ast_expr_ident($1); }
+                    | minussym numbersym { $$ = ast_expr_negated_number($1, $2);}
+                    | plusstym numbersym { $$ = ast_expr_pos_number($1, $2);}       /* I used plussym here instead of pos_sign, I think it does the same thing???*/
+                    | "(" expr ")" { $$ = $2;};
 empty:              %empty{ file_location *floc = file_location_make(lexer_filename(), lexer_line()); 
                     $$ = ast_empty(floc); };
 
