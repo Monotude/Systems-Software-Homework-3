@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "scope_check.h"
-#include "id_attrs.h"
-#include "file_location.h"
 #include "ast.h"
-#include "utilities.h"
-#include "symtab.h"
+#include "file_location.h"
+#include "id_attrs.h"
 #include "scope_check.h"
+#include "symtab.h"
+#include "utilities.h"
 
 void scope_check_program(block_t progast)
 {
@@ -29,8 +28,8 @@ void scope_check_constDecls(const_decls_t cds)
     const_decl_t *cdl = cds.const_decls;
     while (cdl != NULL)
     {
-	    scope_check_constDecl(*cdl);
-	    cdl = cdl->next;
+        scope_check_constDecl(*cdl);
+        cdl = cdl->next;
     }
 }
 
@@ -44,8 +43,8 @@ void scope_check_constDefs(const_defs_t cdfs)
     const_def_t *cdp = cdfs.const_defs;
     while (cdp != NULL)
     {
-	    scope_check_constDef(*cdp);
-	    cdp = cdp->next;
+        scope_check_constDef(*cdp);
+        cdp = cdp->next;
     }
 }
 
@@ -63,7 +62,7 @@ void scope_check_declare_ident(ident_t id)
     else
     {
         int ofst_cnt = symtab_scope_loc_count();
-        id_attrs* attrs = id_attrs_loc_create(*(id.file_loc), ofst_cnt);
+        id_attrs *attrs = id_attrs_loc_create(*(id.file_loc), ofst_cnt);
         symtab_insert(id.name, attrs);
     }
 }
@@ -95,7 +94,7 @@ void scope_check_idents(idents_t ids)
 
 void scope_check_procDecls(proc_decls_t vds)
 {
-    proc_decl_t * pdl = vds.proc_decls;
+    proc_decl_t *pdl = vds.proc_decls;
     while (pdl != NULL)
     {
         scope_check_procDecl(*pdl);
@@ -106,4 +105,110 @@ void scope_check_procDecls(proc_decls_t vds)
 void scope_check_procDecl(proc_decl_t pd)
 {
     scope_check_block(*(pd.block));
+}
+
+void scope_check_stmt(stmt_t stmt)
+{
+    switch (stmt.stmt_kind)
+    {
+    case assign_stmt:
+        scope_check_assignStmt(stmt.data.assign_stmt);
+        break;
+    case call_stmt:
+        scope_check_callStmt(stmt.data.call_stmt);
+        break;
+    case begin_stmt:
+        scope_check_beginStmt(stmt.data.begin_stmt);
+        break;
+    case if_stmt:
+        scope_check_ifStmt(stmt.data.if_stmt);
+        break;
+    case while_stmt:
+        scope_check_whileStmt(stmt.data.while_stmt);
+        break;
+    case read_stmt:
+        scope_check_readStmt(stmt.data.read_stmt);
+        break;
+    case write_stmt:
+        scope_check_writeStmt(stmt.data.write_stmt);
+        break;
+    case skip_stmt:
+        // no identifiers are possible in this case, so just return
+        break;
+    default:
+        bail_with_error("Call to scope_check_stmt with an AST that is not a statement!");
+        break;
+    }
+}
+
+void scope_check_assignStmt(assign_stmt_t stmt)
+{
+    char *name = stmt.name;
+    id_use *idu = scope_check_ident_declared(*(stmt.file_loc), name);
+    assert(idu != NULL);
+    scope_check_expr(*(stmt.expr));
+}
+
+void scope_check_callStmt(call_stmt_t stmt)
+{
+}
+
+void scope_check_beginStmt(begin_stmt_t stmt)
+{
+}
+
+void scope_check_ifStmt(if_stmt_t stmt)
+{
+}
+
+void scope_check_whileStmt(while_stmt_t stmt)
+{
+}
+
+void scope_check_readStmt(read_stmt_t stmt)
+{
+}
+
+void scope_check_writeStmt(write_stmt_t stmt)
+{
+}
+
+id_use *scope_check_ident_declared(file_location floc, const char *name)
+{
+    id_use *ret = symtab_lookup(name);
+    if (ret == NULL)
+    {
+        bail_with_prog_error(floc, "identifier \"%s\" is not declared!", name);
+    }
+    return ret;
+}
+
+void scope_check_expr(expr_t exp)
+{
+    switch (exp.expr_kind)
+    {
+    case expr_bin:
+        scope_check_binary_op_expr(exp.data.binary);
+        break;
+    case expr_ident:
+        scope_check_ident_expr(exp.data.ident);
+        break;
+    case expr_number:
+        // no identifiers are possible in this case, so just return
+        break;
+    default:
+        bail_with_error("Unexpected expr_kind_e (%d) in scope_check_expr", exp.expr_kind);
+        break;
+    }
+}
+
+void scope_check_binary_op_expr(binary_op_expr_t exp)
+{
+    scope_check_expr(*(exp.expr1));
+    scope_check_expr(*(exp.expr2));
+}
+
+void scope_check_ident_expr(ident_t id)
+{
+    scope_check_ident_declared(*(id.file_loc), id.name);
 }
