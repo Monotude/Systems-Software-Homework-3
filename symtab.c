@@ -1,0 +1,6 @@
+
+
+void symtab_initialize()
+{
+    
+}
