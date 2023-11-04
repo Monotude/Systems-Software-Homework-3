@@ -151,26 +151,39 @@ void scope_check_assignStmt(assign_stmt_t stmt)
 
 void scope_check_callStmt(call_stmt_t stmt)
 {
+    char *name = stmt.name;
+    id_use *idu = scope_check_ident_declared(*(stmt.file_loc), name);
+    assert(idu != NULL);
 }
 
 void scope_check_beginStmt(begin_stmt_t stmt)
 {
+    symtab_enter_scope();
+    scope_check_stmts(stmt.stmts);
+    symtab_leave_scope();
 }
 
 void scope_check_ifStmt(if_stmt_t stmt)
 {
+    scope_check_condition(stmt.condition);
+    scope_check_stmt(*(stmt.then_stmt));
+    scope_check_stmt(*(stmt.else_stmt));
 }
 
 void scope_check_whileStmt(while_stmt_t stmt)
 {
+    scope_check_condition(stmt.condition);
+    scope_check_stmt(*(stmt.body));
 }
 
 void scope_check_readStmt(read_stmt_t stmt)
 {
+    scope_check_ident_declared(*(stmt.file_loc), stmt.name);
 }
 
 void scope_check_writeStmt(write_stmt_t stmt)
 {
+    scope_check_expr(stmt.expr);
 }
 
 id_use *scope_check_ident_declared(file_location floc, const char *name)
@@ -211,4 +224,28 @@ void scope_check_binary_op_expr(binary_op_expr_t exp)
 void scope_check_ident_expr(ident_t id)
 {
     scope_check_ident_declared(*(id.file_loc), id.name);
+}
+
+void scope_check_condition(condition_t condition)
+{
+    switch (condition.cond_kind)
+    {
+    case ck_odd:
+        scope_check_condition_odd(condition.data.odd_cond);
+        break;
+    case ck_rel:
+        scope_check_condition_rel(condition.data.rel_op_cond);
+        break;
+    }
+}
+
+void scope_check_condition_odd(odd_condition_t condition)
+{
+    scope_check_expr(condition.expr);
+}
+
+void scope_check_condition_rel(rel_op_condition_t condition)
+{
+    scope_check_expr(condition.expr1);
+    scope_check_expr(condition.expr2);
 }
