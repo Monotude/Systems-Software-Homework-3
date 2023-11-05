@@ -57,12 +57,12 @@ void scope_check_declare_ident(ident_t id)
 {
     if (symtab_declared_in_current_scope(id.name))
     {
-        bail_with_prog_error(*(id.file_loc), "Variable \"%s\" has already been declared", id.name);
+        bail_with_prog_error(*(id.file_loc), "variable \"%s\" is already declared as a %s", id.name, kind2str(symtab_lookup(id.name)->attrs->kind));
     }
     else
     {
         int ofst_cnt = symtab_scope_loc_count();
-        id_attrs *attrs = id_attrs_loc_create(*(id.file_loc), ofst_cnt);
+        id_attrs *attrs = create_id_attrs(*(id.file_loc), 0, ofst_cnt); // need to change
         symtab_insert(id.name, attrs);
     }
 }
@@ -143,7 +143,7 @@ void scope_check_stmt(stmt_t stmt)
 
 void scope_check_assignStmt(assign_stmt_t stmt)
 {
-    char *name = stmt.name;
+    const char *name = stmt.name;
     id_use *idu = scope_check_ident_declared(*(stmt.file_loc), name);
     assert(idu != NULL);
     scope_check_expr(*(stmt.expr));
@@ -151,16 +151,19 @@ void scope_check_assignStmt(assign_stmt_t stmt)
 
 void scope_check_callStmt(call_stmt_t stmt)
 {
-    char *name = stmt.name;
+    const char *name = stmt.name;
     id_use *idu = scope_check_ident_declared(*(stmt.file_loc), name);
     assert(idu != NULL);
 }
 
 void scope_check_beginStmt(begin_stmt_t stmt)
 {
-    symtab_enter_scope();
-    scope_check_stmts(stmt.stmts);
-    symtab_leave_scope();
+    stmt_t *stmts = stmt.stmts.stmts;
+    while (stmts != NULL)
+    {
+        scope_check_stmt(*stmts);
+        stmts = stmts->next;
+    }
 }
 
 void scope_check_ifStmt(if_stmt_t stmt)
