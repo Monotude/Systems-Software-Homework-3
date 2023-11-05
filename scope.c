@@ -22,7 +22,7 @@ scope_t *scope_create()
 }
 
 // Returns the number of constant and variable declarations in the scope
-unsigned int scope_loc_count(scope_t *s)
+extern unsigned int scope_loc_count(scope_t *s)
 {
     return s->loc_count;
 }
@@ -48,9 +48,8 @@ bool scope_declared(scope_t *s, const char *name)
 // Adds an association into the scope
 static void scope_add(scope_t *s, scope_assoc_t *assoc)
 {
-    assoc->attrs->offset_count = s->loc_count + 1;
-    s->size += 1;
-    s->entries[s->size] = assoc;
+    assoc->attrs->offset_count = (s->loc_count)++;
+    s->entries[(s->size)++] = assoc;
 }
 
 // Adds an association into the scope
@@ -64,13 +63,12 @@ void scope_insert(scope_t *s, const char *name, id_attrs *attrs)
     new_assoc->id = name;
     new_assoc->attrs = attrs;
     scope_add(s, new_assoc);
-    free(new_assoc);
 }
 
 // Returns the attributes of a given name in the scope
 id_attrs *scope_lookup(scope_t *s, const char *name)
 {
-    for (int i = 0; i < s->size; i++)
+    for (int i = 0; i < s->size; ++i)
     {
         if (strcmp(s->entries[i]->id, name) == 0)
         {

@@ -50,10 +50,10 @@ void scope_check_constDefs(const_defs_t cdfs)
 
 void scope_check_constDef(const_def_t cdf)
 {
-    scope_check_declare_ident(cdf.ident);
+    scope_check_declare_ident(cdf.ident, cdf.type_tag);
 }
 
-void scope_check_declare_ident(ident_t id)
+void scope_check_declare_ident(ident_t id, AST_type type)
 {
     if (symtab_declared_in_current_scope(id.name))
     {
@@ -62,7 +62,18 @@ void scope_check_declare_ident(ident_t id)
     else
     {
         int ofst_cnt = symtab_scope_loc_count();
-        id_attrs *attrs = create_id_attrs(*(id.file_loc), 0, ofst_cnt); // need to change
+        id_attrs *attrs = NULL;
+        switch (type)
+        {
+        case const_def_ast:
+            attrs = create_id_attrs(*(id.file_loc), constant_idk, ofst_cnt);
+            break;
+        case idents_ast:
+            attrs = create_id_attrs(*(id.file_loc), variable_idk, ofst_cnt);
+            break;
+        default:
+            bail_with_prog_error(*(id.file_loc), "error type of variable");
+        }
         symtab_insert(id.name, attrs);
     }
 }
@@ -87,7 +98,7 @@ void scope_check_idents(idents_t ids)
     ident_t *idp = ids.idents;
     while (idp != NULL)
     {
-        scope_check_declare_ident(*idp);
+        scope_check_declare_ident(*idp, ids.type_tag);
         idp = idp->next;
     }
 }
@@ -104,7 +115,14 @@ void scope_check_procDecls(proc_decls_t vds)
 
 void scope_check_procDecl(proc_decl_t pd)
 {
-    scope_check_block(*(pd.block));
+    if (symtab_declared_in_current_scope(pd.name))
+    {
+        bail_with_prog_error(*(pd.file_loc), "variable \"%s\" is already declared as a %s", pd.name, kind2str(symtab_lookup(pd.name)->attrs->kind));
+    }
+    else
+    {
+        scope_check_block(*(pd.block));
+    }
 }
 
 void scope_check_stmt(stmt_t stmt)
