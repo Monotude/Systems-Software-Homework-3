@@ -22,7 +22,7 @@ extern void scope_check_constDefs(const_defs_t cdfs);
 extern void scope_check_constDef(const_def_t cdf);
 
 // Checks the identifier's scope
-extern void scope_check_declare_ident(ident_t id, AST_type type);
+extern void scope_check_declare_ident(const char *name, AST_type type, file_location *fl);
 
 // Checks multiple variable's scope
 extern void scope_check_varDecls(var_decls_t vds);
