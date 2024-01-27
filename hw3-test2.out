@@ -1,7 +1,0 @@
-var x;
-var y;
-begin
-  x := 3;
-  y := x
-end
-.
